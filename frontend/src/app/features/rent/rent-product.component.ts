@@ -12,100 +12,246 @@ import { ToastService } from '../../core/services/toast.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   template: `
-    <div class="min-h-screen bg-gray-50 py-8">
-      <div class="container mx-auto px-4 max-w-4xl">
-        <h1 class="text-3xl font-bold mb-8">Complete Your Rental</h1>
+    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12">
+      <div class="container mx-auto px-4 max-w-5xl">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+          <h1 class="text-4xl font-bold text-gray-900 mb-2">Complete Your Rental</h1>
+          <p class="text-gray-600">Choose your rental plan and get started</p>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="!product" class="text-center py-20">
+          <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          <p class="text-gray-600 mt-4">Loading product details...</p>
+        </div>
 
         <div *ngIf="product" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <!-- Rental Form -->
+          
+          <!-- Left: Rental Configuration Form -->
           <div class="lg:col-span-2">
-            <div class="bg-white rounded-xl shadow-lg p-6">
-              <h2 class="text-xl font-bold mb-6">Rental Details</h2>
+            <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+              <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                <span class="text-3xl">🎯</span>
+                Select Your Rental Plan
+              </h2>
               
               <form [formGroup]="rentalForm" (ngSubmit)="submitRental()">
-                <!-- Duration Type -->
-                <div class="mb-6">
-                  <label class="block text-sm font-semibold text-gray-700 mb-3">Rental Duration</label>
-                  <div class="grid grid-cols-3 gap-3">
+                
+                <!-- Step 1: Duration Type Selection -->
+                <div class="mb-8">
+                  <label class="block text-sm font-bold text-gray-700 mb-4">
+                    Step 1: Choose Rental Duration
+                  </label>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <label *ngFor="let type of durationTypes" 
-                           class="relative cursor-pointer">
-                      <input type="radio" formControlName="duration_type" [value]="type.value" class="sr-only">
+                           class="relative cursor-pointer group">
+                      <input type="radio" 
+                             formControlName="duration_type" 
+                             [value]="type.value" 
+                             class="sr-only">
                       <div [class.border-blue-600]="rentalForm.get('duration_type')?.value === type.value"
                            [class.bg-blue-50]="rentalForm.get('duration_type')?.value === type.value"
-                           class="border-2 rounded-lg p-4 text-center transition">
-                        <p class="font-semibold">{{ type.label }}</p>
-                        <p class="text-2xl font-bold text-blue-600 mt-2">₹{{ getPrice(type.value) }}</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ type.days }} days</p>
+                           [class.shadow-lg]="rentalForm.get('duration_type')?.value === type.value"
+                           class="border-2 rounded-xl p-6 text-center transition-all hover:border-blue-400 hover:shadow-md">
+                        
+                        <!-- Icon -->
+                        <div class="text-4xl mb-3">{{ type.icon }}</div>
+                        
+                        <!-- Label -->
+                        <p class="font-bold text-lg mb-2">{{ type.label }}</p>
+                        
+                        <!-- Price -->
+                        <p class="text-3xl font-bold text-blue-600 mb-1">
+                          ₹{{ getPrice(type.value) }}
+                        </p>
+                        
+                        <!-- Duration Info -->
+                        <p class="text-xs text-gray-500 mb-2">{{ type.description }}</p>
+                        
+                        <!-- Savings Badge -->
+                        <span *ngIf="type.savings" 
+                              class="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
+                          💰 Save {{ type.savings }}
+                        </span>
+                        
+                        <!-- Selected Indicator -->
+                        <div *ngIf="rentalForm.get('duration_type')?.value === type.value"
+                             class="mt-3 flex items-center justify-center gap-2 text-blue-600 font-semibold text-sm">
+                          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                          </svg>
+                          Selected
+                        </div>
                       </div>
                     </label>
                   </div>
                 </div>
 
-                <!-- Start Date -->
-                <div class="mb-6">
-                  <label class="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
-                  <input type="date" formControlName="start_date" [min]="minDate"
-                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <!-- Step 2: Start Date Selection -->
+                <div class="mb-8">
+                  <label class="block text-sm font-bold text-gray-700 mb-2">
+                    Step 2: Select Start Date
+                  </label>
+                  <input type="date" 
+                         formControlName="start_date" 
+                         [min]="minDate"
+                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-lg">
+                  <p class="text-sm text-gray-600 mt-2">
+                    📅 Your rental will end on: <strong>{{ getEndDate() | date:'fullDate' }}</strong>
+                  </p>
                 </div>
 
-                <!-- Terms -->
-                <div class="mb-6">
-                  <label class="flex items-start gap-2">
-                    <input type="checkbox" formControlName="acceptTerms"
-                           class="mt-1 w-4 h-4 text-blue-600 rounded">
-                    <span class="text-sm text-gray-700">
-                      I agree to the <a href="#" class="text-blue-600 hover:underline">terms and conditions</a> 
-                      and rental policy
+                <!-- Step 3: Price Breakdown -->
+                <div class="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200">
+                  <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                    <span class="text-2xl">💵</span>
+                    Price Breakdown
+                  </h3>
+                  <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                      <span class="text-gray-700">Rental Cost ({{ getDurationLabel() }})</span>
+                      <span class="font-bold text-lg">₹{{ getPrice(rentalForm.get('duration_type')?.value) }}</span>
+                    </div>
+                    
+                    <div *ngIf="product.security_deposit && product.security_deposit > 0" 
+                         class="flex justify-between items-center">
+                      <span class="text-gray-700">Security Deposit</span>
+                      <span class="font-bold text-lg">₹{{ product.security_deposit }}</span>
+                    </div>
+                    
+                    <div class="border-t-2 border-blue-300 pt-3 flex justify-between items-center">
+                      <span class="font-bold text-lg">Total Amount</span>
+                      <span class="text-3xl font-bold text-blue-600">₹{{ getTotalAmount() }}</span>
+                    </div>
+                  </div>
+                  
+                  <div *ngIf="product.security_deposit && product.security_deposit > 0" 
+                       class="mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
+                    <p class="text-xs text-green-800 flex items-center gap-2">
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                      </svg>
+                      <strong>Security deposit will be fully refunded</strong> after product return in original condition
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Step 4: Terms & Conditions -->
+                <div class="mb-8">
+                  <label class="flex items-start gap-3 cursor-pointer group">
+                    <input type="checkbox" 
+                           formControlName="acceptTerms"
+                           class="mt-1 w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500">
+                    <span class="text-sm text-gray-700 group-hover:text-gray-900">
+                      I agree to the 
+                      <a href="#" class="text-blue-600 hover:text-blue-700 font-semibold underline">rental terms and conditions</a>, 
+                      and understand that I am responsible for the product during the rental period. 
+                      Damage or loss may result in charges.
                     </span>
                   </label>
                 </div>
 
+                <!-- Submit Button -->
                 <button type="submit" 
                         [disabled]="rentalForm.invalid || loading"
-                        class="w-full py-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50">
-                  <span *ngIf="!loading">Confirm Rental</span>
-                  <span *ngIf="loading">Processing...</span>
+                        class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+                  <span *ngIf="!loading" class="flex items-center justify-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Confirm Rental & Proceed
+                  </span>
+                  <span *ngIf="loading" class="flex items-center justify-center gap-3">
+                    <svg class="animate-spin h-6 w-6" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing Your Rental...
+                  </span>
                 </button>
+
+                <p class="text-center text-sm text-gray-500 mt-4">
+                  🔒 Secure checkout • Your payment information is encrypted
+                </p>
               </form>
             </div>
           </div>
 
-          <!-- Order Summary -->
+          <!-- Right: Order Summary (Sticky) -->
           <div class="lg:col-span-1">
-            <div class="bg-white rounded-xl shadow-lg p-6 sticky top-8">
-              <h3 class="font-bold text-lg mb-4">Order Summary</h3>
+            <div class="bg-white rounded-2xl shadow-xl p-6 sticky top-8 border border-gray-100">
+              <h3 class="font-bold text-xl mb-6 flex items-center gap-2">
+                <span class="text-2xl">📦</span>
+                Order Summary
+              </h3>
               
-              <div class="flex gap-3 mb-4 pb-4 border-b">
+              <!-- Product Card -->
+              <div class="flex gap-4 mb-6 pb-6 border-b-2 border-gray-100">
                 <img [src]="productService.getImageUrl(product.main_image)" 
                      [alt]="product.name"
-                     class="w-20 h-20 object-cover rounded-lg">
-                <div class="flex-1">
-                  <h4 class="font-semibold text-sm line-clamp-2">{{ product.name }}</h4>
-                  <p class="text-xs text-gray-600">{{ product.category_name }}</p>
+                     class="w-24 h-24 object-cover rounded-xl shadow-md border border-gray-200">
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-bold text-sm line-clamp-2 mb-2">{{ product.name }}</h4>
+                  <p class="text-xs text-gray-600 mb-1">
+                    <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded-full font-semibold">
+                      {{ product.category_name }}
+                    </span>
+                  </p>
+                  <p class="text-xs text-gray-600 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                    </svg>
+                    {{ product.city }}
+                  </p>
                 </div>
               </div>
 
-              <div class="space-y-3 mb-4">
+              <!-- Rental Details -->
+              <div class="space-y-3 mb-6">
                 <div class="flex justify-between text-sm">
-                  <span class="text-gray-600">Rental Cost</span>
-                  <span class="font-semibold">₹{{ getPrice(rentalForm.get('duration_type')?.value) }}</span>
+                  <span class="text-gray-600">📅 Duration:</span>
+                  <span class="font-bold">{{ getDurationLabel() }}</span>
                 </div>
-                <div class="flex justify-between text-sm" *ngIf="product.security_deposit">
-                  <span class="text-gray-600">Security Deposit</span>
-                  <span class="font-semibold">₹{{ product.security_deposit }}</span>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">🗓️ Start Date:</span>
+                  <span class="font-bold">{{ rentalForm.get('start_date')?.value | date:'shortDate' }}</span>
                 </div>
-                <div class="border-t pt-3 flex justify-between">
-                  <span class="font-bold">Total</span>
-                  <span class="font-bold text-xl text-blue-600">
-                    ₹{{ getTotalAmount() }}
-                  </span>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">🏁 End Date:</span>
+                  <span class="font-bold">{{ getEndDate() | date:'shortDate' }}</span>
                 </div>
               </div>
 
-              <div class="bg-green-50 border border-green-200 rounded-lg p-3">
-                <p class="text-xs text-green-800">
-                  ✓ Security deposit will be refunded after return
-                </p>
+              <!-- Total -->
+              <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-200">
+                <div class="flex justify-between items-center">
+                  <span class="font-bold text-gray-900">Total Payable</span>
+                  <span class="text-3xl font-bold text-blue-600">₹{{ getTotalAmount() }}</span>
+                </div>
+              </div>
+
+              <!-- Trust Badges -->
+              <div class="mt-6 space-y-2 text-xs text-gray-600">
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>100% Secure Payment</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>Free Delivery & Pickup</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>24/7 Customer Support</span>
+                </div>
               </div>
             </div>
           </div>
@@ -121,9 +267,27 @@ export class RentProductComponent implements OnInit {
   minDate = '';
 
   durationTypes = [
-    { value: 'daily', label: 'Daily', days: 1 },
-    { value: 'weekly', label: 'Weekly', days: 7 },
-    { value: 'monthly', label: 'Monthly', days: 30 }
+    { 
+      value: 'daily', 
+      label: 'Daily', 
+      description: '1 Day',
+      icon: '📅',
+      savings: null
+    },
+    { 
+      value: 'weekly', 
+      label: 'Weekly', 
+      description: '7 Days',
+      icon: '📆',
+      savings: '10%'
+    },
+    { 
+      value: 'monthly', 
+      label: 'Monthly', 
+      description: '30 Days',
+      icon: '🗓️',
+      savings: '20%'
+    }
   ];
 
   constructor(
@@ -148,6 +312,9 @@ export class RentProductComponent implements OnInit {
     const slug = this.route.snapshot.paramMap.get('slug');
     if (slug) {
       this.loadProduct(slug);
+    } else {
+      this.toastService.error('Invalid product');
+      this.router.navigate(['/products']);
     }
   }
 
@@ -156,7 +323,7 @@ export class RentProductComponent implements OnInit {
       next: (product) => {
         this.product = product;
       },
-      error: () => {
+      error: (err) => {
         this.toastService.error('Product not found');
         this.router.navigate(['/products']);
       }
@@ -170,9 +337,9 @@ export class RentProductComponent implements OnInit {
       case 'daily':
         return this.product.daily_price;
       case 'weekly':
-        return this.product.weekly_price || (this.product.daily_price * 7 * 0.9);
+        return this.product.weekly_price || Math.round(this.product.daily_price * 7 * 0.9);
       case 'monthly':
-        return this.product.monthly_price || (this.product.daily_price * 30 * 0.8);
+        return this.product.monthly_price || Math.round(this.product.daily_price * 30 * 0.8);
       default:
         return this.product.daily_price;
     }
@@ -182,6 +349,25 @@ export class RentProductComponent implements OnInit {
     const rentalCost = this.getPrice(this.rentalForm.get('duration_type')?.value);
     const deposit = this.product?.security_deposit || 0;
     return rentalCost + deposit;
+  }
+
+  getDurationLabel(): string {
+    const type = this.rentalForm.get('duration_type')?.value;
+    const duration = this.durationTypes.find(d => d.value === type);
+    return duration ? duration.label : 'Daily';
+  }
+
+  getEndDate(): Date {
+    const startDate = new Date(this.rentalForm.get('start_date')?.value);
+    const durationType = this.rentalForm.get('duration_type')?.value;
+    
+    let daysToAdd = 1;
+    if (durationType === 'weekly') daysToAdd = 7;
+    if (durationType === 'monthly') daysToAdd = 30;
+    
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + daysToAdd);
+    return endDate;
   }
 
   submitRental() {
@@ -196,11 +382,18 @@ export class RentProductComponent implements OnInit {
 
       this.http.post(`${environment.apiUrl}/subscriptions/create/`, rentalData).subscribe({
         next: (response: any) => {
-          this.toastService.success('Rental created successfully!');
-          this.router.navigate(['/dashboard/rentals']);
+          this.toastService.success('🎉 Rental created successfully!');
+          setTimeout(() => {
+            this.router.navigate(['/dashboard'], { queryParams: { tab: 'rentals' } });
+          }, 1000);
         },
         error: (err) => {
-          this.toastService.error('Failed to create rental. Please try again.');
+          console.error('Rental creation error:', err);
+          if (err.error?.detail) {
+            this.toastService.error(err.error.detail);
+          } else {
+            this.toastService.error('Failed to create rental. Please try again.');
+          }
           this.loading = false;
         }
       });

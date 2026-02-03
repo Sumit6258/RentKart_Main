@@ -1,5 +1,5 @@
 from rest_framework import generics, status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Customer
@@ -13,6 +13,7 @@ class CustomerListView(generics.ListCreateAPIView):
 
 
 @api_view(['GET', 'PATCH'])
+@permission_classes([IsAuthenticated])
 def customer_profile_view(request):
     """Get or update customer profile"""
     try:

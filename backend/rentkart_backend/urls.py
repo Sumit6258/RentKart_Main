@@ -1,7 +1,3 @@
-"""
-Main URL Configuration for Rentkart Backend
-"""
-
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -10,41 +6,28 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
-# Swagger/OpenAPI Schema
 schema_view = get_schema_view(
-    openapi.Info(
-        title="Rentkart API",
-        default_version='v1',
-        description="Rental Marketplace API Documentation",
-        contact=openapi.Contact(email="api@rentkart.com"),
-        license=openapi.License(name="Proprietary"),
-    ),
-    public=True,
-    permission_classes=(permissions.AllowAny,),
+   openapi.Info(
+      title="Rentkart API",
+      default_version='v1',
+      description="Rental Marketplace API",
+   ),
+   public=True,
+   permission_classes=(permissions.AllowAny,),
 )
 
 urlpatterns = [
-    # Admin
     path('admin/', admin.site.urls),
+    path('api/v1/auth/', include('users.urls')),
+    path('api/v1/products/', include('products.urls')),
+    path('api/v1/customers/', include('customers.urls')),
+    path('api/v1/subscriptions/', include('subscriptions.urls')),
     
     # API Documentation
     path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    
-    # API v1 Routes
-    path('api/v1/auth/', include('users.urls')),
-    path('api/v1/customers/', include('customers.urls')),
-    path('api/v1/products/', include('products.urls')),
-    path('api/v1/subscriptions/', include('subscriptions.urls')),
-    path('api/v1/payments/', include('payments.urls')),
 ]
 
-# Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-
-# Admin customization
-admin.site.site_header = "Rentkart Administration"
-admin.site.site_title = "Rentkart Admin"
-admin.site.index_title = "Welcome to Rentkart Admin Panel"

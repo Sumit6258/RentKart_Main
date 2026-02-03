@@ -9,6 +9,7 @@ export interface User {
   first_name: string;
   last_name: string;
   full_name: string;
+  phone: string;
   role: string;
 }
 
@@ -18,6 +19,7 @@ export interface AuthResponse {
     access: string;
     refresh: string;
   };
+  message?: string;
 }
 
 @Injectable({
@@ -60,6 +62,11 @@ export class AuthService {
     localStorage.setItem('refreshToken', response.tokens.refresh);
     localStorage.setItem('currentUser', JSON.stringify(response.user));
     this.currentUserSubject.next(response.user);
+  }
+
+  updateCurrentUser(user: User) {
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    this.currentUserSubject.next(user);
   }
 
   get currentUser(): User | null {
