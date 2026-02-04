@@ -33,6 +33,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
   },
   {
+    path: 'vendor-dashboard',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/vendor/vendor-dashboard.component').then(m => m.VendorDashboardComponent)
+  },
+  {
     path: 'about',
     loadComponent: () => import('./features/about/about.component').then(m => m.AboutComponent)
   },

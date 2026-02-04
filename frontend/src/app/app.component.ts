@@ -10,19 +10,15 @@ import { ToastService } from './core/services/toast.service';
   standalone: true,
   imports: [CommonModule, RouterModule, ToastComponent],
   template: `
-    <!-- Toast Notifications -->
     <app-toast></app-toast>
 
-    <!-- Navigation -->
     <nav class="bg-white shadow-md sticky top-0 z-40">
       <div class="container mx-auto px-4">
         <div class="flex justify-between items-center h-16">
-          <!-- Logo -->
           <a routerLink="/" class="text-2xl font-bold text-blue-600 hover:text-blue-700 transition">
             🏠 Rentkart
           </a>
           
-          <!-- Navigation Links -->
           <div class="hidden md:flex items-center gap-6">
             <a routerLink="/" 
                routerLinkActive="text-blue-600 font-semibold"
@@ -42,7 +38,6 @@ import { ToastService } from './core/services/toast.service';
             </a>
           </div>
           
-          <!-- Auth Buttons / User Menu -->
           <div class="flex items-center gap-3">
             <ng-container *ngIf="!(authService.currentUser$ | async); else loggedIn">
               <a routerLink="/auth/login" 
@@ -69,18 +64,22 @@ import { ToastService } from './core/services/toast.service';
                   </svg>
                 </button>
                 
-                <!-- Dropdown Menu -->
                 <div *ngIf="showDropdown" 
                      class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2">
+                  <a *ngIf="(authService.currentUser$ | async)?.role === 'vendor'" 
+                     routerLink="/vendor-dashboard" 
+                     class="block px-4 py-2 hover:bg-gray-100 transition">
+                    🏪 Vendor Dashboard
+                  </a>
                   <a routerLink="/dashboard" 
                      class="block px-4 py-2 hover:bg-gray-100 transition">
                     📊 Dashboard
                   </a>
-                  <a routerLink="/dashboard/rentals" 
+                  <a routerLink="/dashboard" [queryParams]="{tab: 'rentals'}"
                      class="block px-4 py-2 hover:bg-gray-100 transition">
                     🛍️ My Rentals
                   </a>
-                  <a routerLink="/dashboard/profile" 
+                  <a routerLink="/dashboard" [queryParams]="{tab: 'profile'}"
                      class="block px-4 py-2 hover:bg-gray-100 transition">
                     👤 Profile
                   </a>
@@ -97,12 +96,10 @@ import { ToastService } from './core/services/toast.service';
       </div>
     </nav>
 
-    <!-- Main Content -->
     <main class="min-h-screen">
       <router-outlet></router-outlet>
     </main>
 
-    <!-- Footer -->
     <footer class="bg-gray-900 text-white py-12 mt-20">
       <div class="container mx-auto px-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -128,9 +125,9 @@ import { ToastService } from './core/services/toast.service';
           <div>
             <h4 class="font-semibold mb-4">Contact</h4>
             <ul class="space-y-2 text-gray-400">
-              <li>📧 support&#64;rentkart.in</li>
-              <li>📞 +91 92641 89962</li>
-              <li>📍 Pune, India</li>
+              <li>📧 support&#64;rentkart.com</li>
+              <li>📞 +91 98765 43210</li>
+              <li>📍 Mumbai, India</li>
             </ul>
           </div>
         </div>

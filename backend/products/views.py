@@ -1,5 +1,6 @@
-from rest_framework import generics, filters
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework import generics, filters, status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Category, Product
@@ -63,3 +64,69 @@ class ProductsByCategoryView(generics.ListAPIView):
             category__slug=category_slug,
             is_active=True
         )
+
+
+# Vendor Dashboard Views
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def vendor_dashboard_stats(request):
+    """Get vendor dashboard statistics"""
+    if request.user.role != 'vendor':
+        return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    from subscriptions.models import Subscription
+    from payments.models import Payment
+    
+    # Get vendor's products
+    products = Product.objects.filter(vendor=request.user)
+    
+    # Get subscriptions for vendor's products
+    subscriptions = Subscription.objects.filter(product__in=products)
+    
+    # Calculate stats
+    active_rentals = subscriptions.filter(status='active').count()
+    total_products = products.count()
+    
+    # Calculate total earnings (from successful payments)
+    payments = Payment.objects.filter(
+        subscription__in=subscriptions,
+        status='success'
+    )
+    total_earnings = sum(float(p.amount) for p in payments)
+    
+    return Response({
+        'active_rentals': active_rentals,
+        'total_products': total_products,
+        'total_earnings': total_earnings,
+        'pending_rentals': subscriptions.filter(status='pending').count(),
+        'completed_rentals': subscriptions.filter(status='completed').count()
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def vendor_products(request):
+    """Get vendor's products"""
+    if request.user.role != 'vendor':
+        return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    products = Product.objects.filter(vendor=request.user)
+    serializer = ProductDetailSerializer(products, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def vendor_rentals(request):
+    """Get rentals for vendor's products"""
+    if request.user.role != 'vendor':
+        return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    from subscriptions.models import Subscription
+    from subscriptions.serializers import SubscriptionSerializer
+    
+    products = Product.objects.filter(vendor=request.user)
+    subscriptions = Subscription.objects.filter(product__in=products)
+    
+    serializer = SubscriptionSerializer(subscriptions, many=True)
+    return Response(serializer.data)
