@@ -1,4 +1,3 @@
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -8,11 +7,12 @@ import { ProductService } from '../../core/services/product.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { ToastService } from '../../core/services/toast.service';
+import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
 
 @Component({
   selector: 'app-rent-product',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, InrCurrencyPipe],
   styles: [`
     @keyframes spin {
       to { transform: rotate(360deg); }
@@ -91,27 +91,18 @@ import { ToastService } from '../../core/services/toast.service';
                            [class.shadow-lg]="rentalForm.get('duration_type')?.value === type.value"
                            class="border-2 rounded-xl p-6 text-center transition-all hover:border-blue-400 hover:shadow-md">
                         
-                        <!-- Icon -->
                         <div class="text-4xl mb-3">{{ type.icon }}</div>
-                        
-                        <!-- Label -->
                         <p class="font-bold text-lg mb-2">{{ type.label }}</p>
-                        
-                        <!-- Price -->
                         <p class="text-3xl font-bold text-blue-600 mb-1">
-                          ₹{{ getPrice(type.value) }}
+                          {{ getPrice(type.value) | inrCurrency }}
                         </p>
-                        
-                        <!-- Duration Info -->
                         <p class="text-xs text-gray-500 mb-2">{{ type.description }}</p>
                         
-                        <!-- Savings Badge -->
                         <span *ngIf="type.savings" 
                               class="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
                           💰 Save {{ type.savings }}
                         </span>
                         
-                        <!-- Selected Indicator -->
                         <div *ngIf="rentalForm.get('duration_type')?.value === type.value"
                              class="mt-3 flex items-center justify-center gap-2 text-blue-600 font-semibold text-sm">
                           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -138,27 +129,42 @@ import { ToastService } from '../../core/services/toast.service';
                   </p>
                 </div>
 
-                <!-- Step 3: Price Breakdown -->
+                <!-- Step 3: Price Breakdown with GST -->
                 <div class="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200">
                   <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
                     <span class="text-2xl">💵</span>
                     Price Breakdown
                   </h3>
                   <div class="space-y-3">
+                    <!-- Base Rental Cost -->
                     <div class="flex justify-between items-center">
                       <span class="text-gray-700">Rental Cost ({{ getDurationLabel() }})</span>
-                      <span class="font-bold text-lg">₹{{ getPrice(rentalForm.get('duration_type')?.value) }}</span>
+                      <span class="font-bold text-lg">{{ getPrice(rentalForm.get('duration_type')?.value) | inrCurrency }}</span>
                     </div>
                     
+                    <!-- GST -->
+                    <div class="flex justify-between items-center">
+                      <span class="text-gray-700">GST (18%)</span>
+                      <span class="font-bold text-lg">{{ getGSTAmount() | inrCurrency }}</span>
+                    </div>
+                    
+                    <!-- Subtotal -->
+                    <div class="flex justify-between items-center pt-2 border-t border-blue-200">
+                      <span class="text-gray-700 font-semibold">Subtotal</span>
+                      <span class="font-bold text-lg">{{ getSubtotal() | inrCurrency }}</span>
+                    </div>
+                    
+                    <!-- Security Deposit -->
                     <div *ngIf="product.security_deposit && product.security_deposit > 0" 
                          class="flex justify-between items-center">
-                      <span class="text-gray-700">Security Deposit</span>
-                      <span class="font-bold text-lg">₹{{ product.security_deposit }}</span>
+                      <span class="text-gray-700">Security Deposit (Refundable)</span>
+                      <span class="font-bold text-lg">{{ product.security_deposit | inrCurrency }}</span>
                     </div>
                     
+                    <!-- Total -->
                     <div class="border-t-2 border-blue-300 pt-3 flex justify-between items-center">
-                      <span class="font-bold text-lg">Total Amount</span>
-                      <span class="text-3xl font-bold text-blue-600">₹{{ getTotalAmount() }}</span>
+                      <span class="font-bold text-xl">Total Payable</span>
+                      <span class="text-3xl font-bold text-blue-600">{{ getTotalAmount() | inrCurrency }}</span>
                     </div>
                   </div>
                   
@@ -182,8 +188,7 @@ import { ToastService } from '../../core/services/toast.service';
                     <span class="text-sm text-gray-700 group-hover:text-gray-900">
                       I agree to the 
                       <a href="#" class="text-blue-600 hover:text-blue-700 font-semibold underline">rental terms and conditions</a>, 
-                      and understand that I am responsible for the product during the rental period. 
-                      Damage or loss may result in charges.
+                      and understand that I am responsible for the product during the rental period.
                     </span>
                   </label>
                 </div>
@@ -263,7 +268,7 @@ import { ToastService } from '../../core/services/toast.service';
               <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-200">
                 <div class="flex justify-between items-center">
                   <span class="font-bold text-gray-900">Total Payable</span>
-                  <span class="text-3xl font-bold text-blue-600">₹{{ getTotalAmount() }}</span>
+                  <span class="text-3xl font-bold text-blue-600">{{ getTotalAmount() | inrCurrency }}</span>
                 </div>
               </div>
 
@@ -280,12 +285,6 @@ import { ToastService } from '../../core/services/toast.service';
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                   </svg>
                   <span>Free Delivery & Pickup</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                  </svg>
-                  <span>24/7 Customer Support</span>
                 </div>
               </div>
             </div>
@@ -313,13 +312,11 @@ import { ToastService } from '../../core/services/toast.service';
 
         <!-- Payment Selection -->
         <div *ngIf="!processingPayment && !paymentSuccess && !paymentFailed">
-          <!-- Header -->
           <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
             <h3 class="text-2xl font-bold mb-2">Complete Payment</h3>
-            <p class="text-blue-100">Total Amount: ₹{{ getTotalAmount() }}</p>
+            <p class="text-blue-100">Total Amount: {{ getTotalAmount() | inrCurrency }}</p>
           </div>
 
-          <!-- Payment Methods -->
           <div class="p-6">
             <h4 class="font-bold mb-4">Select Payment Method</h4>
             <div class="space-y-3">
@@ -340,12 +337,11 @@ import { ToastService } from '../../core/services/toast.service';
               </label>
             </div>
 
-            <!-- Actions -->
             <div class="flex gap-3 mt-6">
               <button (click)="processPayment()" 
                       [disabled]="!selectedPaymentMethod"
                       class="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 shadow-lg transition">
-                Pay ₹{{ getTotalAmount() }}
+                Pay {{ getTotalAmount() | inrCurrency }}
               </button>
               <button (click)="showPaymentModal = false"
                       class="px-6 py-4 bg-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-300 transition">
@@ -355,7 +351,7 @@ import { ToastService } from '../../core/services/toast.service';
           </div>
         </div>
 
-        <!-- Success State -->
+        <!-- Success State with Invoice -->
         <div *ngIf="paymentSuccess" class="p-12 text-center">
           <div class="w-24 h-24 bg-green-100 rounded-full mx-auto mb-6 flex items-center justify-center">
             <svg class="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -363,11 +359,25 @@ import { ToastService } from '../../core/services/toast.service';
             </svg>
           </div>
           <h3 class="text-3xl font-bold text-green-600 mb-2">Payment Successful!</h3>
-          <p class="text-gray-600 mb-6">Your rental has been confirmed</p>
-          <button (click)="goToDashboard()"
-                  class="px-8 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-lg">
-            View My Rentals
-          </button>
+          <p class="text-gray-600 mb-4">Your rental has been confirmed</p>
+          
+          <!-- Invoice Info -->
+          <div *ngIf="invoiceData" class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-6 text-left">
+            <p class="text-sm font-bold text-blue-900 mb-2">📄 Invoice Generated</p>
+            <p class="text-xs text-gray-700">Invoice No: <strong>{{ invoiceData.invoice_number }}</strong></p>
+            <p class="text-xs text-gray-700">Transaction ID: <strong>{{ paymentData?.transaction_id }}</strong></p>
+          </div>
+          
+          <div class="flex gap-3 justify-center">
+            <button (click)="viewInvoice()"
+                    class="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg">
+              View Invoice
+            </button>
+            <button (click)="goToDashboard()"
+                    class="px-6 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-lg">
+              My Rentals
+            </button>
+          </div>
         </div>
 
         <!-- Failed State -->
@@ -408,6 +418,8 @@ export class RentProductComponent implements OnInit {
   paymentFailed = false;
   paymentError = '';
   createdSubscriptionId: string | null = null;
+  invoiceData: any = null;
+  paymentData: any = null;
 
   paymentMethods = [
     { value: 'upi', label: 'UPI', icon: '📱', description: 'Google Pay, PhonePe, Paytm' },
@@ -469,10 +481,21 @@ export class RentProductComponent implements OnInit {
     }
   }
 
+  getGSTAmount(): number {
+    const basePrice = this.getPrice(this.rentalForm.get('duration_type')?.value);
+    return Math.round(basePrice * 0.18);
+  }
+
+  getSubtotal(): number {
+    const basePrice = this.getPrice(this.rentalForm.get('duration_type')?.value);
+    const gst = this.getGSTAmount();
+    return basePrice + gst;
+  }
+
   getTotalAmount(): number {
-    const rentalCost = this.getPrice(this.rentalForm.get('duration_type')?.value);
+    const subtotal = this.getSubtotal();
     const deposit = this.product?.security_deposit || 0;
-    return rentalCost + deposit;
+    return subtotal + deposit;
   }
 
   getDurationLabel(): string {
@@ -524,13 +547,14 @@ export class RentProductComponent implements OnInit {
       payment_method: this.selectedPaymentMethod
     };
 
-    // Simulate processing delay
     setTimeout(() => {
       this.http.post(`${environment.apiUrl}/payments/process/`, paymentData).subscribe({
         next: (response: any) => {
           this.processingPayment = false;
           if (response.success) {
             this.paymentSuccess = true;
+            this.invoiceData = response.invoice;
+            this.paymentData = response.payment;
             this.toastService.success('🎉 Payment successful!');
           } else {
             this.paymentFailed = true;
@@ -550,6 +574,12 @@ export class RentProductComponent implements OnInit {
     this.paymentFailed = false;
     this.paymentError = '';
     this.selectedPaymentMethod = '';
+  }
+
+  viewInvoice() {
+    if (this.invoiceData) {
+      this.router.navigate(['/dashboard/invoices', this.invoiceData.id]);
+    }
   }
 
   goToDashboard() {
