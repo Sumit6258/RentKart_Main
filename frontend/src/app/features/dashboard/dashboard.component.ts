@@ -1,13 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/services/auth.service';
 import { ProductService } from '../../core/services/product.service';
 import { ToastService } from '../../core/services/toast.service';
 import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
+import { GoogleMapsService } from '../../core/services/google-maps.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -126,7 +127,7 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
                   </span>
                 </button>
                 
-                <button (click)="activeTab = 'invoices'"
+                <button (click)="activeTab = 'invoices'; loadInvoices()"
                         [class.bg-blue-50]="activeTab === 'invoices'"
                         [class.text-blue-600]="activeTab === 'invoices'"
                         [class.border-l-4]="activeTab === 'invoices'"
@@ -146,7 +147,7 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
                   <span>Profile</span>
                 </button>
                 
-                <button (click)="activeTab = 'addresses'"
+                <button (click)="activeTab = 'addresses'; loadAddresses()"
                         [class.bg-blue-50]="activeTab === 'addresses'"
                         [class.text-blue-600]="activeTab === 'addresses'"
                         [class.border-l-4]="activeTab === 'addresses'"
@@ -324,7 +325,7 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
                         </div>
                       </div>
 
-                      <div *ngIf="rental.is_active && rental.days_remaining >= 0">
+                      <div *ngIf="rental.status === 'active'">
                         <div class="bg-gradient-to-r from-gray-100 to-gray-50 rounded-xl p-4 border border-gray-200">
                           <div class="flex justify-between items-center mb-3">
                             <div class="flex items-center gap-2">
@@ -421,17 +422,17 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
                           </span>
                         </td>
                         <td class="py-4 px-4">
-  <div class="flex gap-2">
-    <button (click)="viewInvoice(invoice.id)"
-            class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold text-sm">
-      👁️ View
-    </button>
-    <button (click)="downloadInvoice(invoice.id, invoice.invoice_number)"
-            class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-semibold text-sm">
-      📥 Download
-    </button>
-  </div>
-</td>
+                          <div class="flex gap-2">
+                            <button (click)="viewInvoice(invoice.id)"
+                                    class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold text-sm">
+                              👁️ View
+                            </button>
+                            <button (click)="downloadInvoice(invoice.id, invoice.invoice_number)"
+                                    class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-semibold text-sm">
+                              📥 Download
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -563,7 +564,7 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
                     <span class="text-3xl">🏠</span>
                     My Addresses
                   </h2>
-                  <button (click)="showAddressForm = !showAddressForm"
+                  <button (click)="onShowAddressForm()"
                           class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-lg transition">
                     + Add New Address
                   </button>
@@ -574,30 +575,46 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
                   <form [formGroup]="addressForm" (ngSubmit)="addAddress()">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                          Search Address 🔍
+                        </label>
+                        <input #addressInput type="text" placeholder="Start typing your address..."
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <p class="text-xs text-gray-600 mt-1">
+                          💡 Start typing to search and select your address from Google Maps
+                        </p>
+                      </div>
+                      
+                      <div class="md:col-span-2">
                         <label class="block text-sm font-bold text-gray-700 mb-2">Address Line 1</label>
                         <input formControlName="address_line1" type="text"
                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                       </div>
+                      
                       <div class="md:col-span-2">
                         <label class="block text-sm font-bold text-gray-700 mb-2">Address Line 2 (Optional)</label>
                         <input formControlName="address_line2" type="text"
                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                       </div>
+                      
                       <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2">City</label>
                         <input formControlName="city" type="text"
                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                       </div>
+                      
                       <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2">State</label>
                         <input formControlName="state" type="text"
                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                       </div>
+                      
                       <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2">Pincode</label>
                         <input formControlName="pincode" type="text"
                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                       </div>
+                      
                       <div class="flex items-end">
                         <label class="flex items-center gap-2 cursor-pointer">
                           <input type="checkbox" formControlName="is_default"
@@ -606,11 +623,21 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
                         </label>
                       </div>
                     </div>
+
+                    <!-- Google Map Preview -->
+                    <div *ngIf="selectedLocation" class="mt-6">
+                      <label class="block text-sm font-bold text-gray-700 mb-2">📍 Location on Map</label>
+                      <div #mapContainer class="w-full h-64 rounded-xl border-2 border-blue-300 overflow-hidden"></div>
+                      <p class="text-xs text-gray-600 mt-2">
+                        💡 You can drag the marker to adjust the exact location
+                      </p>
+                    </div>
+
                     <div class="flex gap-3 mt-6">
                       <button type="submit" 
                               [disabled]="addressForm.invalid || savingAddress"
                               class="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 shadow-lg">
-                        <span *ngIf="!savingAddress">Save Address</span>
+                        <span *ngIf="!savingAddress">💾 Save Address</span>
                         <span *ngIf="savingAddress">Saving...</span>
                       </button>
                       <button type="button" (click)="showAddressForm = false"
@@ -644,6 +671,9 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
                         </div>
                         <p class="text-gray-700 mb-1">{{ address.address_line2 }}</p>
                         <p class="text-gray-700">{{ address.city }}, {{ address.state }} - {{ address.pincode }}</p>
+                        <p *ngIf="address.latitude && address.longitude" class="text-xs text-gray-500 mt-2">
+                          📍 Lat: {{ address.latitude }}, Long: {{ address.longitude }}
+                        </p>
                       </div>
                       <button (click)="deleteAddress(address.id)"
                               class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-semibold">
@@ -658,7 +688,7 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
                   <div class="text-8xl mb-4">🏠</div>
                   <h3 class="text-2xl font-bold text-gray-900 mb-2">No Addresses Yet</h3>
                   <p class="text-gray-600 mb-6">Add your first address to start renting</p>
-                  <button (click)="showAddressForm = true"
+                  <button (click)="onShowAddressForm()"
                           class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold shadow-lg">
                     + Add Address
                   </button>
@@ -671,7 +701,10 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
     </div>
   `
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, AfterViewInit {
+  @ViewChild('addressInput') addressInput!: ElementRef;
+  @ViewChild('mapContainer') mapContainer!: ElementRef;
+  
   user: any = null;
   rentals: any[] = [];
   addresses: any[] = [];
@@ -684,6 +717,8 @@ export class DashboardComponent implements OnInit {
   activeTab: 'overview' | 'rentals' | 'invoices' | 'profile' | 'addresses' = 'overview';
   rentalFilter: 'all' | 'active' | 'completed' = 'all';
   showAddressForm = false;
+  selectedLocation: { lat: number, lng: number } | null = null;
+  mapInstance: any = null;
   
   profileForm: FormGroup;
   addressForm: FormGroup;
@@ -695,7 +730,8 @@ export class DashboardComponent implements OnInit {
     public productService: ProductService,
     private toastService: ToastService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private googleMapsService: GoogleMapsService
   ) {
     this.profileForm = this.fb.group({
       first_name: [''],
@@ -711,6 +747,8 @@ export class DashboardComponent implements OnInit {
       city: [''],
       state: [''],
       pincode: [''],
+      latitude: [null],
+      longitude: [null],
       is_default: [false]
     });
   }
@@ -719,13 +757,21 @@ export class DashboardComponent implements OnInit {
     this.user = this.authService.currentUser;
     this.loadProfile();
     this.loadRentals();
-    this.loadInvoices();
     
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'] as any;
+        if (this.activeTab === 'invoices') {
+          this.loadInvoices();
+        }
       }
     });
+  }
+
+  ngAfterViewInit() {
+    if (this.activeTab === 'addresses' && this.showAddressForm) {
+      this.initAddressAutocomplete();
+    }
   }
 
   loadProfile() {
@@ -839,6 +885,88 @@ export class DashboardComponent implements OnInit {
     this.toastService.info('Feature coming soon');
   }
 
+  onShowAddressForm() {
+    this.showAddressForm = true;
+    setTimeout(() => {
+      this.initAddressAutocomplete();
+    }, 100);
+  }
+
+  initAddressAutocomplete() {
+    if (this.addressInput?.nativeElement) {
+      this.googleMapsService.initAutocomplete(
+        this.addressInput.nativeElement,
+        (place: any) => {
+          this.handlePlaceSelect(place);
+        }
+      );
+    }
+  }
+
+  handlePlaceSelect(place: any) {
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+    
+    this.selectedLocation = { lat, lng };
+    
+    let address = '';
+    let city = '';
+    let state = '';
+    let pincode = '';
+    
+    if (place.address_components) {
+      for (const component of place.address_components) {
+        const types = component.types;
+        
+        if (types.includes('street_number') || types.includes('route')) {
+          address += component.long_name + ' ';
+        }
+        if (types.includes('locality')) {
+          city = component.long_name;
+        }
+        if (types.includes('administrative_area_level_1')) {
+          state = component.long_name;
+        }
+        if (types.includes('postal_code')) {
+          pincode = component.long_name;
+        }
+      }
+    }
+    
+    this.addressForm.patchValue({
+      address_line1: address.trim() || place.formatted_address,
+      city: city,
+      state: state,
+      pincode: pincode,
+      latitude: lat,
+      longitude: lng
+    });
+    
+    this.showMapWithLocation(lat, lng);
+  }
+
+  showMapWithLocation(lat: number, lng: number) {
+    if (this.mapContainer?.nativeElement) {
+      this.googleMapsService.createMap(
+        this.mapContainer.nativeElement,
+        lat,
+        lng
+      ).then((result: any) => {
+        if (result) {
+          this.mapInstance = result;
+          
+          result.marker.addListener('dragend', () => {
+            const position = result.marker.getPosition();
+            this.addressForm.patchValue({
+              latitude: position.lat(),
+              longitude: position.lng()
+            });
+          });
+        }
+      });
+    }
+  }
+
   addAddress() {
     if (this.addressForm.valid) {
       this.savingAddress = true;
@@ -849,6 +977,7 @@ export class DashboardComponent implements OnInit {
           this.loadAddresses();
           this.addressForm.reset();
           this.showAddressForm = false;
+          this.selectedLocation = null;
           this.savingAddress = false;
         },
         error: (err) => {
@@ -874,57 +1003,57 @@ export class DashboardComponent implements OnInit {
   }
 
   downloadInvoice(invoiceId: string, invoiceNumber: string) {
-  const token = localStorage.getItem('accessToken');
-  
-  fetch(`${environment.apiUrl}/payments/invoices/${invoiceId}/download/`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Failed to download invoice');
-    }
-    return response.blob();
-  })
-  .then(blob => {
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Rentkart_Invoice_${invoiceNumber}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    this.toastService.success('✅ Invoice downloaded successfully!');
-  })
-  .catch(error => {
-    console.error('Download error:', error);
-    this.toastService.error('❌ Failed to download invoice');
-  });
-}
+    const token = localStorage.getItem('accessToken');
+    
+    fetch(`${environment.apiUrl}/payments/invoices/${invoiceId}/download/`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to download invoice');
+      }
+      return response.blob();
+    })
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Rentkart_Invoice_${invoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      this.toastService.success('✅ Invoice downloaded successfully!');
+    })
+    .catch(error => {
+      console.error('Download error:', error);
+      this.toastService.error('❌ Failed to download invoice');
+    });
+  }
 
-viewInvoice(invoiceId: string) {
-  const token = localStorage.getItem('accessToken');
-  
-  fetch(`${environment.apiUrl}/payments/invoices/${invoiceId}/download/`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  })
-  .then(response => response.blob())
-  .then(blob => {
-    const url = window.URL.createObjectURL(blob);
-    window.open(url, '_blank');
-    this.toastService.success('✅ Opening invoice...');
-  })
-  .catch(error => {
-    console.error('View error:', error);
-    this.toastService.error('❌ Failed to open invoice');
-  });
-}
+  viewInvoice(invoiceId: string) {
+    const token = localStorage.getItem('accessToken');
+    
+    fetch(`${environment.apiUrl}/payments/invoices/${invoiceId}/download/`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => response.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      this.toastService.success('✅ Opening invoice...');
+    })
+    .catch(error => {
+      console.error('View error:', error);
+      this.toastService.error('❌ Failed to open invoice');
+    });
+  }
 
   filterRentals(filter: 'all' | 'active' | 'completed') {
     this.rentalFilter = filter;

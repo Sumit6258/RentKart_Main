@@ -17,6 +17,7 @@ urlpatterns = [
     # Admin CRUD routes
     path('admin/categories/', views.admin_categories_crud, name='admin-categories-crud'),
     path('admin/categories/<uuid:category_id>/', views.admin_category_detail, name='admin-category-detail'),
-    path('admin/products/<uuid:product_id>/', views.admin_product_action, name='admin-product-action'),
+    path('admin/products/create/', views.admin_create_product, name='admin-create-product'),
+    path('admin/products/<uuid:product_id>/', views.admin_product_detail, name='admin-product-detail'),
     path('admin/rentals/<uuid:rental_id>/', views.admin_rental_action, name='admin-rental-action'),
 ]

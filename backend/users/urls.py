@@ -9,6 +9,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
     path('profile/picture/', views.upload_profile_picture, name='upload-profile-picture'),
+    path('profile/picture/remove/', views.remove_profile_picture, name='remove-profile-picture'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     
     # Admin auth

@@ -279,3 +279,24 @@ def admin_all_payments(request):
     payments = Payment.objects.all()
     serializer = PaymentSerializer(payments, many=True)
     return Response(serializer.data)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def remove_profile_picture(request):
+    """Remove user's profile picture"""
+    user = request.user
+    if user.profile_picture:
+        # Delete the file
+        user.profile_picture.delete()
+        user.profile_picture = None
+        user.save()
+        
+        return Response({
+            'user': UserSerializer(user).data,
+            'message': 'Profile picture removed successfully!'
+        })
+    
+    return Response({
+        'error': 'No profile picture to remove'
+    }, status=status.HTTP_400_BAD_REQUEST)

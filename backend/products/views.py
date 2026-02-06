@@ -1,5 +1,6 @@
 from rest_framework import generics, filters, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -175,10 +176,30 @@ def admin_category_detail(request, category_id):
         return Response({'message': 'Category deleted'}, status=status.HTTP_204_NO_CONTENT)
 
 
-@api_view(['PATCH', 'DELETE'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def admin_product_action(request, product_id):
-    """Admin: Update or delete product"""
+@parser_classes([MultiPartParser, FormParser])
+def admin_create_product(request):
+    """Admin: Create new product with image upload"""
+    if not (request.user.is_superuser or request.user.role == 'admin'):
+        return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    serializer = ProductDetailSerializer(data=request.data)
+    if serializer.is_valid():
+        # Set vendor to admin if not provided
+        if not request.data.get('vendor'):
+            serializer.save(vendor=request.user)
+        else:
+            serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
+def admin_product_detail(request, product_id):
+    """Admin: Get, update, or delete product"""
     if not (request.user.is_superuser or request.user.role == 'admin'):
         return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
     
@@ -187,7 +208,11 @@ def admin_product_action(request, product_id):
     except Product.DoesNotExist:
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
     
-    if request.method == 'PATCH':
+    if request.method == 'GET':
+        serializer = ProductDetailSerializer(product)
+        return Response(serializer.data)
+    
+    elif request.method == 'PATCH':
         serializer = ProductDetailSerializer(product, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()

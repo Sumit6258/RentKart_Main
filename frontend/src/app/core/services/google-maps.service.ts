@@ -7,66 +7,73 @@ declare var google: any;
 })
 export class GoogleMapsService {
   private loaded = false;
-  private apiKey = 'YOUR_GOOGLE_MAPS_API_KEY'; // Replace with your API key
 
   constructor() {}
 
-  loadGoogleMaps(): Promise<any> {
-    if (this.loaded) {
-      return Promise.resolve(google);
+  isLoaded(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (typeof google !== 'undefined' && google.maps) {
+        this.loaded = true;
+        resolve(true);
+      } else {
+        const checkInterval = setInterval(() => {
+          if (typeof google !== 'undefined' && google.maps) {
+            this.loaded = true;
+            clearInterval(checkInterval);
+            resolve(true);
+          }
+        }, 100);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          resolve(false);
+        }, 10000);
+      }
+    });
+  }
+
+  async initAutocomplete(inputElement: HTMLInputElement, callback: (place: any) => void) {
+    const isLoaded = await this.isLoaded();
+    if (!isLoaded) {
+      console.error('Google Maps API failed to load');
+      return;
     }
 
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      
-      script.onload = () => {
-        this.loaded = true;
-        resolve(google);
-      };
-      
-      script.onerror = (error) => {
-        reject(error);
-      };
-      
-      document.head.appendChild(script);
+    const autocomplete = new google.maps.places.Autocomplete(inputElement, {
+      types: ['address'],
+      componentRestrictions: { country: 'in' }
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (place.geometry) {
+        callback(place);
+      }
     });
   }
 
-  initAutocomplete(inputElement: HTMLInputElement, callback: (place: any) => void) {
-    this.loadGoogleMaps().then((google) => {
-      const autocomplete = new google.maps.places.Autocomplete(inputElement, {
-        types: ['address'],
-        componentRestrictions: { country: 'in' }
-      });
+  async createMap(element: HTMLElement, lat: number, lng: number): Promise<any> {
+    const isLoaded = await this.isLoaded();
+    if (!isLoaded) {
+      console.error('Google Maps API failed to load');
+      return null;
+    }
 
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (place.geometry) {
-          callback(place);
-        }
-      });
+    const map = new google.maps.Map(element, {
+      center: { lat, lng },
+      zoom: 15,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false
     });
-  }
 
-  createMap(element: HTMLElement, lat: number, lng: number): Promise<any> {
-    return this.loadGoogleMaps().then((google) => {
-      const map = new google.maps.Map(element, {
-        center: { lat, lng },
-        zoom: 15,
-        mapTypeControl: false,
-        streetViewControl: false
-      });
-
-      const marker = new google.maps.Marker({
-        position: { lat, lng },
-        map: map,
-        draggable: true
-      });
-
-      return { map, marker, google };
+    const marker = new google.maps.Marker({
+      position: { lat, lng },
+      map: map,
+      draggable: true
     });
+
+    return { map, marker, google };
   }
 }
