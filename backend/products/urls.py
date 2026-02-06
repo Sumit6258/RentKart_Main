@@ -13,4 +13,10 @@ urlpatterns = [
     path('vendor/stats/', views.vendor_dashboard_stats, name='vendor-stats'),
     path('vendor/products/', views.vendor_products, name='vendor-products'),
     path('vendor/rentals/', views.vendor_rentals, name='vendor-rentals'),
+    
+    # Admin CRUD routes
+    path('admin/categories/', views.admin_categories_crud, name='admin-categories-crud'),
+    path('admin/categories/<uuid:category_id>/', views.admin_category_detail, name='admin-category-detail'),
+    path('admin/products/<uuid:product_id>/', views.admin_product_action, name='admin-product-action'),
+    path('admin/rentals/<uuid:rental_id>/', views.admin_rental_action, name='admin-rental-action'),
 ]
