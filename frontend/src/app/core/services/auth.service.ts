@@ -1,83 +1,126 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { Router } from '@angular/router';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-
-export interface User {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  full_name: string;
-  phone: string;
-  role: string;
-}
-
-export interface AuthResponse {
-  user: User;
-  tokens: {
-    access: string;
-    refresh: string;
-  };
-  message?: string;
-}
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  private currentUserKey = 'currentUser';
+  private tokenKey = 'accessToken';
+  private refreshTokenKey = 'refreshToken';
+  
+  private currentUserSubject = new BehaviorSubject<any>(this.getCurrentUserFromStorage());
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {
-    this.loadUser();
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {}
+
+  private getCurrentUserFromStorage(): any {
+    const user = localStorage.getItem(this.currentUserKey);
+    return user ? JSON.parse(user) : null;
   }
 
-  private loadUser() {
-    const userStr = localStorage.getItem('currentUser');
-    if (userStr) {
-      this.currentUserSubject.next(JSON.parse(userStr));
-    }
-  }
-
-  register(data: any): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register/`, data)
-      .pipe(tap(response => this.handleAuth(response)));
-  }
-
-  login(data: any): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login/`, data)
-      .pipe(tap(response => this.handleAuth(response)));
-  }
-
-  logout(): void {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('currentUser');
-    this.currentUserSubject.next(null);
-  }
-
-  private handleAuth(response: AuthResponse) {
-    localStorage.setItem('accessToken', response.tokens.access);
-    localStorage.setItem('refreshToken', response.tokens.refresh);
-    localStorage.setItem('currentUser', JSON.stringify(response.user));
-    this.currentUserSubject.next(response.user);
-  }
-
-  updateCurrentUser(user: User) {
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    this.currentUserSubject.next(user);
-  }
-
-  get currentUser(): User | null {
+  get currentUser(): any {
     return this.currentUserSubject.value;
   }
 
+  get isLoggedIn(): boolean {
+    return !!localStorage.getItem(this.tokenKey);
+  }
+
   get isAuthenticated(): boolean {
-    return !!localStorage.getItem('accessToken');
+    return this.isLoggedIn;
+  }
+
+  get accessToken(): string | null {
+    return localStorage.getItem(this.tokenKey);
   }
 
   getToken(): string | null {
-    return localStorage.getItem('accessToken');
+    return this.accessToken;
+  }
+
+  login(credentials: any): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/login/`, credentials).pipe(
+      tap((response: any) => {
+        this.setAuthData(response.user, response.tokens);
+      })
+    );
+  }
+
+  register(userData: any): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/register/`, userData).pipe(
+      tap((response: any) => {
+        this.setAuthData(response.user, response.tokens);
+      })
+    );
+  }
+
+  adminLogin(credentials: any): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/admin/login/`, credentials).pipe(
+      tap((response: any) => {
+        this.setAuthData(response.user, response.tokens);
+      })
+    );
+  }
+
+  private setAuthData(userData: any, tokens: any) {
+    localStorage.setItem(this.currentUserKey, JSON.stringify(userData));
+    localStorage.setItem(this.tokenKey, tokens.access);
+    localStorage.setItem(this.refreshTokenKey, tokens.refresh);
+    this.currentUserSubject.next(userData);
+    
+    this.redirectBasedOnRole(userData.role);
+  }
+
+  logout() {
+    localStorage.removeItem(this.currentUserKey);
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.refreshTokenKey);
+    this.currentUserSubject.next(null);
+    this.router.navigate(['/']);
+  }
+
+  updateCurrentUser(user: any) {
+    localStorage.setItem(this.currentUserKey, JSON.stringify(user));
+    this.currentUserSubject.next(user);
+  }
+
+  private redirectBasedOnRole(role: string) {
+    switch (role) {
+      case 'customer':
+        this.router.navigate(['/dashboard']);
+        break;
+      case 'vendor':
+        this.router.navigate(['/vendor']);
+        break;
+      case 'admin':
+        this.router.navigate(['/admin-dashboard']);
+        break;
+      default:
+        this.router.navigate(['/']);
+    }
+  }
+
+  hasRole(role: string): boolean {
+    return this.currentUser?.role === role;
+  }
+
+  isCustomer(): boolean {
+    return this.hasRole('customer');
+  }
+
+  isVendor(): boolean {
+    return this.hasRole('vendor');
+  }
+
+  isAdmin(): boolean {
+    return this.hasRole('admin') || this.currentUser?.is_superuser;
   }
 }

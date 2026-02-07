@@ -318,7 +318,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   rentNow() {
-    if (!this.authService.isAuthenticated) {
+    if (!this.authService.isLoggedIn) {
       this.toastService.info('Please login to rent this product');
       this.router.navigate(['/auth/login'], { 
         queryParams: { returnUrl: `/products/${this.product.slug}` }

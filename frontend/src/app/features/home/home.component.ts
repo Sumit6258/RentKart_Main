@@ -145,7 +145,7 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
             <!-- Live Badge -->
             <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-400/30 rounded-full mb-6 animate-fadeInUp backdrop-blur-sm">
               <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span class="text-sm font-semibold text-green-200">🔴 LIVE - {{ activeRentals }} Active Rentals Now</span>
+              <span class="text-sm font-semibold text-green-200">🔴 LIVE - {{ liveStats.active_rentals }} Active Rentals Now</span>
             </div>
 
             <h1 class="text-5xl md:text-7xl font-black mb-6 animate-fadeInUp delay-100">
@@ -168,22 +168,22 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
               </a>
             </div>
 
-            <!-- Trust Indicators -->
+            <!-- REAL-TIME Trust Indicators -->
             <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 animate-fadeInUp delay-400">
               <div class="text-center">
-                <div class="text-3xl md:text-4xl font-black mb-2 animate-countUp">{{ stats.total_users }}+</div>
+                <div class="text-3xl md:text-4xl font-black mb-2 animate-countUp">{{ liveStats.total_users }}+</div>
                 <div class="text-blue-200 text-sm">Happy Users</div>
               </div>
               <div class="text-center">
-                <div class="text-3xl md:text-4xl font-black mb-2 animate-countUp delay-100">{{ stats.total_products }}+</div>
+                <div class="text-3xl md:text-4xl font-black mb-2 animate-countUp delay-100">{{ liveStats.total_products }}+</div>
                 <div class="text-blue-200 text-sm">Products Listed</div>
               </div>
               <div class="text-center">
-                <div class="text-3xl md:text-4xl font-black mb-2 animate-countUp delay-200">{{ stats.total_vendors }}+</div>
+                <div class="text-3xl md:text-4xl font-black mb-2 animate-countUp delay-200">{{ liveStats.total_vendors }}+</div>
                 <div class="text-blue-200 text-sm">Verified Vendors</div>
               </div>
               <div class="text-center">
-                <div class="text-3xl md:text-4xl font-black mb-2 animate-countUp delay-300">{{ activeRentals }}</div>
+                <div class="text-3xl md:text-4xl font-black mb-2 animate-countUp delay-300">{{ liveStats.active_rentals }}</div>
                 <div class="text-blue-200 text-sm">Active Rentals</div>
               </div>
             </div>
@@ -429,20 +429,21 @@ export class HomeComponent implements OnInit {
   featuredProducts: any[] = [];
   categories: any[] = [];
   loadingProducts = true;
-  stats = {
-    total_users: 1250,
-    total_products: 856,
-    total_vendors: 124,
+  
+  // REAL-TIME STATS from backend
+  liveStats = {
+    total_users: 0,
+    total_products: 0,
+    total_vendors: 0,
     active_rentals: 0
   };
-  activeRentals = 0;
 
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
     this.loadFeaturedProducts();
     this.loadCategories();
-    this.loadStats();
+    this.loadLiveStats();
     this.startRealTimeUpdates();
   }
 
@@ -480,23 +481,39 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  loadStats() {
-    this.http.get<any>(`${environment.apiUrl}/auth/admin/stats/`).subscribe({
+  loadLiveStats() {
+    this.http.get<any>(`${environment.apiUrl}/auth/public/stats/`).subscribe({
       next: (data) => {
-        this.stats = data;
-        this.activeRentals = data.active_rentals;
+        this.liveStats = data;
       },
       error: () => {
-        // Use default values
+        // Fallback to fetching individual stats
+        this.http.get<any>(`${environment.apiUrl}/auth/admin/stats/`).subscribe({
+          next: (data) => {
+            this.liveStats = {
+              total_users: data.total_users || 0,
+              total_products: data.total_products || 0,
+              total_vendors: data.total_vendors || 0,
+              active_rentals: data.active_rentals || 0
+            };
+          },
+          error: () => {
+            console.error('Could not load stats');
+          }
+        });
       }
     });
   }
 
   startRealTimeUpdates() {
+    // Update active rentals every 10 seconds for live feel
     setInterval(() => {
-      const change = Math.random() > 0.5 ? 1 : -1;
-      this.activeRentals = Math.max(0, this.activeRentals + change);
-    }, 5000);
+      this.http.get<any>(`${environment.apiUrl}/auth/public/stats/`).subscribe({
+        next: (data) => {
+          this.liveStats.active_rentals = data.active_rentals;
+        }
+      });
+    }, 10000);
   }
 
   getProductImage(imagePath: string | undefined): string {
