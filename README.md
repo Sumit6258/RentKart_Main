@@ -166,11 +166,11 @@ Our mission is to democratize access to products and create a sustainable sharin
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Angular** | 18.x | Progressive web framework |
+| **Angular** | 19.x | Progressive web framework |
 | **TypeScript** | 5.x | Type-safe development |
 | **Tailwind CSS** | 3.x | Utility-first styling |
 | **RxJS** | 7.x | Reactive programming |
-| **Angular Router** | 18.x | Client-side routing |
+| **Angular Router** | 19.x | Client-side routing |
 
 ### Backend
 

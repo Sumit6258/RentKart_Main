@@ -180,18 +180,26 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
                 </div>
 
                 <!-- Step 4: Terms & Conditions -->
-                <div class="mb-8">
-                  <label class="flex items-start gap-3 cursor-pointer group">
-                    <input type="checkbox" 
-                           formControlName="acceptTerms"
-                           class="mt-1 w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500">
-                    <span class="text-sm text-gray-700 group-hover:text-gray-900">
-                      I agree to the 
-                      <a href="#" class="text-blue-600 hover:text-blue-700 font-semibold underline">rental terms and conditions</a>, 
-                      and understand that I am responsible for the product during the rental period.
-                    </span>
-                  </label>
-                </div>
+<div class="mb-8">
+  <label class="flex items-start gap-3 cursor-pointer group">
+    <input type="checkbox" 
+           formControlName="acceptTerms"
+           class="mt-1 w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500">
+
+    <span class="text-sm text-gray-700 group-hover:text-gray-900">
+      I agree to the 
+      
+      <a routerLink="/rental-terms"
+         target="_blank"
+         class="text-blue-600 hover:text-blue-700 font-semibold underline">
+        rental terms and conditions
+      </a>, 
+      
+      and understand that I am responsible for the product during the rental period.
+    </span>
+  </label>
+</div>
+
 
                 <!-- Submit Button -->
                 <button type="submit" 

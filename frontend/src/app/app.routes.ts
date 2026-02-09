@@ -55,6 +55,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/admin/admin-dashboard.component').then(m => m.AdminDashboardComponent),
     canActivate: [adminGuard]
   },
+
+  {
+  path: 'rental-terms',
+  loadComponent: () =>
+    import('./features/about/rental-terms.component')
+      .then(m => m.RentalTermsComponent)
+},
   
   // Fallback
   {

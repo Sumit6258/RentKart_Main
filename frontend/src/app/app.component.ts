@@ -154,7 +154,7 @@ import { ToastService } from './core/services/toast.service';
             <ul class="space-y-2">
               <li><a href="#" class="text-gray-400 hover:text-white transition">Help Center</a></li>
               <li><a href="#" class="text-gray-400 hover:text-white transition">Contact Us</a></li>
-              <li><a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
+              <li><a routerLink="/rental-terms" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
             </ul>
           </div>
 
