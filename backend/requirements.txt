@@ -1,32 +1,100 @@
-# Core Django
-Django==4.2.7
-djangorestframework==3.14.0
-django-cors-headers==4.3.1
-django-filter==23.5
-djangorestframework-simplejwt==5.3.1
+# =========================
+# Core Django Framework
+# =========================
+Django==4.2.7                 # Django core
+asgiref==3.11.0               # ASGI utilities
+sqlparse==0.5.5               # SQL parsing
+pytz==2025.2                  # Timezone support
+tzdata==2025.3                # Timezone database
 
-# Database
-psycopg2-binary
+# =========================
+# Django REST Framework
+# =========================
+djangorestframework==3.14.0   # REST APIs
+django-filter==23.5           # API filtering
+django-cors-headers==4.3.1    # CORS handling
 
-# Caching
-redis==5.0.1
-django-redis==5.4.0
+# =========================
+# Authentication & Security
+# =========================
+djangorestframework-simplejwt==5.3.1  # JWT auth
+PyJWT==2.11.0                          # JWT encoding
 
-# Task Queue
-celery==5.3.4
+# =========================
+# Database (PostgreSQL)
+# =========================
+psycopg2-binary==2.9.11        # PostgreSQL driver
 
-# Storage
-Pillow
+# =========================
+# Redis & Caching
+# =========================
+redis==5.0.1                  # Redis client
+django-redis==5.4.0           # Django cache backend
 
+# =========================
+# Background Jobs (Celery)
+# =========================
+celery==5.3.4                 # Task queue
+amqp==5.3.1                   # AMQP protocol
+billiard==4.2.4               # Multiprocessing
+kombu==5.6.2                  # Messaging layer
+vine==5.1.0                   # Promise utilities
+
+# =========================
+# Media & Images
+# =========================
+Pillow==12.1.0                # Image processing
+
+# =========================
+# PDF & Invoice Generation
+# =========================
+reportlab==4.4.9              # PDF generation
+qrcode==8.2                   # QR code support
+
+# =========================
 # API Documentation
-drf-yasg==1.21.7
+# =========================
+drf-yasg==1.21.7              # Swagger docs
+inflection==0.5.1             # Naming helpers
+uritemplate==4.2.0            # URL templates
 
+# =========================
 # Production Server
-gunicorn==21.2.0
-whitenoise==6.6.0
+# =========================
+gunicorn==21.2.0              # WSGI server
+whitenoise==6.6.0             # Static files
 
-# Environment Variables
-python-decouple==3.8
+# =========================
+# Environment & Config
+# =========================
+python-decouple==3.8          # Env variables
+PyYAML==6.0.3                 # YAML parsing
 
-# Utilities
-python-dateutil==2.8.2
+# =========================
+# Date & Time Utilities
+# =========================
+python-dateutil==2.8.2        # Date utilities
+six==1.17.0                   # Python compatibility
+
+# =========================
+# CLI & Dependency Utilities
+# =========================
+click==8.3.1                  # CLI framework
+click-didyoumean==0.3.1       # CLI suggestions
+click-plugins==1.1.1.2        # CLI plugins
+click-repl==0.3.0             # Interactive CLI
+prompt-toolkit==3.0.52        # CLI prompts
+wcwidth==0.5.3                # Terminal width
+
+# =========================
+# HTTP & Encoding
+# =========================
+charset-normalizer==3.4.4     # Text encoding
+packaging==26.0               # Version parsing
+
+# =========================
+# Build & Runtime Safety
+# =========================
+setuptools==80.10.2           # Package setup
+wheel==0.46.3                 # Wheel builds
+pip==26.0                     # Package installer
