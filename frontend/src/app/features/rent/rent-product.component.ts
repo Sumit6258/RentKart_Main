@@ -479,32 +479,47 @@ export class RentProductComponent implements OnInit {
     });
   }
 
-  getPrice(durationType: string): number {
-    if (!this.product) return 0;
-    switch (durationType) {
-      case 'daily': return this.product.daily_price;
-      case 'weekly': return this.product.weekly_price || Math.round(this.product.daily_price * 7 * 0.9);
-      case 'monthly': return this.product.monthly_price || Math.round(this.product.daily_price * 30 * 0.8);
-      default: return this.product.daily_price;
-    }
-  }
+getPrice(durationType: string): number {
+  if (!this.product) return 0;
 
-  getGSTAmount(): number {
-    const basePrice = this.getPrice(this.rentalForm.get('duration_type')?.value);
-    return Math.round(basePrice * 0.18);
-  }
+  switch (durationType) {
+    case 'daily':
+      return Number(this.product.daily_price);
 
-  getSubtotal(): number {
-    const basePrice = this.getPrice(this.rentalForm.get('duration_type')?.value);
-    const gst = this.getGSTAmount();
-    return basePrice + gst;
-  }
+    case 'weekly':
+      return Number(
+        this.product.weekly_price ??
+        (this.product.daily_price * 7 * 0.9)
+      );
 
-  getTotalAmount(): number {
-    const subtotal = this.getSubtotal();
-    const deposit = this.product?.security_deposit || 0;
-    return subtotal + deposit;
+    case 'monthly':
+      return Number(
+        this.product.monthly_price ??
+        (this.product.daily_price * 30 * 0.8)
+      );
+
+    default:
+      return Number(this.product.daily_price);
   }
+}
+
+getGSTAmount(): number {
+  const base = this.getPrice(this.rentalForm.value.duration_type);
+  return Number((base * 0.18).toFixed(2));
+}
+
+getSubtotal(): number {
+  const base = this.getPrice(this.rentalForm.value.duration_type);
+  const gst = this.getGSTAmount();
+  return Number((base + gst).toFixed(2));
+}
+
+getTotalAmount(): number {
+  const subtotal = this.getSubtotal();
+  const deposit = Number(this.product?.security_deposit || 0);
+  return Number((subtotal + deposit).toFixed(2));
+}
+
 
   getDurationLabel(): string {
     const type = this.rentalForm.get('duration_type')?.value;
