@@ -427,6 +427,21 @@ rentkart/
 
    Frontend will be available at: `http://localhost:4200`
 
+### ADMIN CREDENTIALS
+
+  Username - admin@rentkart.in
+  Password - admin219267
+
+### CUSTOMER CREDENTIALS 
+
+  Username - aryak@gmail.com 
+  Password - 12345678
+
+### VENDOR CREDENTIALS 
+
+  Username - harshdip@gmail.com
+  Password - 12345678
+
 ### Google Maps API Setup (Optional)
 
 1. Get API key from [Google Cloud Console](https://console.cloud.google.com/)
