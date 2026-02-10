@@ -68,7 +68,7 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
           <div class="lg:col-span-2">
             <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
               <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                <span class="text-3xl">🎯</span>
+                <span class="text-3xl"></span>
                 Select Your Rental Plan
               </h2>
               
@@ -125,14 +125,14 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
                          [min]="minDate"
                          class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-lg">
                   <p class="text-sm text-gray-600 mt-2">
-                    📅 Your rental will end on: <strong>{{ getEndDate() | date:'fullDate' }}</strong>
+                     Your rental will end on: <strong>{{ getEndDate() | date:'fullDate' }}</strong>
                   </p>
                 </div>
 
                 <!-- Step 3: Price Breakdown with GST -->
                 <div class="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200">
                   <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
-                    <span class="text-2xl">💵</span>
+                    <span class="text-2xl"></span>
                     Price Breakdown
                   </h3>
                   <div class="space-y-3">
@@ -259,15 +259,15 @@ import { InrCurrencyPipe } from '../../shared/pipes/currency.pipe';
               <!-- Rental Details -->
               <div class="space-y-3 mb-6">
                 <div class="flex justify-between text-sm">
-                  <span class="text-gray-600">📅 Duration:</span>
+                  <span class="text-gray-600"> Duration:</span>
                   <span class="font-bold">{{ getDurationLabel() }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
-                  <span class="text-gray-600">🗓️ Start Date:</span>
+                  <span class="text-gray-600"> Start Date:</span>
                   <span class="font-bold">{{ rentalForm.get('start_date')?.value | date:'shortDate' }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
-                  <span class="text-gray-600">🏁 End Date:</span>
+                  <span class="text-gray-600"> End Date:</span>
                   <span class="font-bold">{{ getEndDate() | date:'shortDate' }}</span>
                 </div>
               </div>
@@ -430,15 +430,15 @@ export class RentProductComponent implements OnInit {
   paymentData: any = null;
 
   paymentMethods = [
-    { value: 'upi', label: 'UPI', icon: '📱', description: 'Google Pay, PhonePe, Paytm' },
-    { value: 'card', label: 'Credit/Debit Card', icon: '💳', description: 'Visa, Mastercard, RuPay' },
-    { value: 'netbanking', label: 'Net Banking', icon: '🏦', description: 'All major banks' },
-    { value: 'wallet', label: 'Digital Wallet', icon: '👛', description: 'Paytm, Amazon Pay' }
+    { value: 'upi', label: 'UPI', icon: '', description: 'Google Pay, PhonePe, Paytm' },
+    { value: 'card', label: 'Credit/Debit Card', icon: '', description: 'Visa, Mastercard, RuPay' },
+    { value: 'netbanking', label: 'Net Banking', icon: '', description: 'All major banks' },
+    { value: 'wallet', label: 'Digital Wallet', icon: '', description: 'Paytm, Amazon Pay' }
   ];
 
   durationTypes = [
-    { value: 'daily', label: 'Daily', description: '1 Day', icon: '📅', savings: null },
-    { value: 'weekly', label: 'Weekly', description: '7 Days', icon: '📆', savings: '10%' },
+    { value: 'daily', label: 'Daily', description: '1 Day', icon: '🗓️', savings: null },
+    { value: 'weekly', label: 'Weekly', description: '7 Days', icon: '🗓️', savings: '10%' },
     { value: 'monthly', label: 'Monthly', description: '30 Days', icon: '🗓️', savings: '20%' }
   ];
 
@@ -479,7 +479,7 @@ export class RentProductComponent implements OnInit {
     });
   }
 
-getPrice(durationType: string): number {
+  getPrice(durationType: string): number {
   if (!this.product) return 0;
 
   switch (durationType) {
@@ -519,7 +519,6 @@ getTotalAmount(): number {
   const deposit = Number(this.product?.security_deposit || 0);
   return Number((subtotal + deposit).toFixed(2));
 }
-
 
   getDurationLabel(): string {
     const type = this.rentalForm.get('duration_type')?.value;
